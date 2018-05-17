@@ -1,0 +1,450 @@
+---
+title: "Projet Réseaux de neurones"
+author: "MOUSSA Aiad"
+date: "22 mars 2018"
+output: html_document
+---
+
+Préparation de la base de donnée:
+  séparation de la variable cible dans la base de donnée
+  séparation tu train et du test
+  normalisation des données
+  transformation de la variable cible de categoriele en quantitative
+```{r}
+library(RSNNS)
+setwd("C:/Users/ayadm/OneDrive/isup/Reseau_de_neurones")
+seeds=read.table("seeds_dataset.txt",sep="",header = TRUE)
+seeds <- seeds[sample(1:nrow(seeds), length(1:nrow(seeds))), 1:ncol(seeds)]
+#View(seeds)
+seedsvalue = seeds[,1:7]
+seedstargets = seeds[,8]
+
+seedsDectargets <- decodeClassLabels(seedstargets)
+seeds <- splitForTrainingAndTest(seedsvalue, seedsDectargets, ratio = 0.15)
+seeds <- normTrainingAndTestSet(seeds)
+
+```
+
+
+```{r}
+library(RSNNS)
+seeds=read.table("seeds_dataset.txt",sep="",header = TRUE)
+View(seeds)
+seedsvalue = seeds[,1:7]
+seedstargets = seeds[,8]
+
+seedsDectargets <- decodeClassLabels(seedstargets)
+seeds <- splitForTrainingAndTest(seedsvalue, seedsDectargets, ratio = 0.15)
+seeds <- normTrainingAndTestSet(seeds)
+
+model1 <- mlp(seeds$inputsTrain, seeds$targetsTrain, size = c(5),learnFunc = "SCG",learnFuncParams = c(0.1), maxit = 100, inputsTest = seeds$inputsTest,
+             targetsTest = seeds$targetsTest)
+
+predictions1 <- predict(model1, seeds$inputsTest)
+plotIterativeError(model1)
+plotRegressionError(predictions1[, 2], seeds$targetsTest[, 2], pch = 3)
+plotROC(fitted.values(model1)[, 2], seeds$targetsTrain[, 2])
+#plotROC(predictions1[, 2], seeds$targetsTest[, 2])
+
+pred=confusionMatrix(seeds$targetsTrain, fitted.values(model1))
+
+pred
+
+taux = sum(diag(pred))/sum(pred)
+
+taux
+#[1] 1
+```
+Recherche des parametres optimaux
+
+model1 <- mlp(seeds$inputsTrain, seeds$targetsTrain,nInputs=7,nOutputs=3, size = c(5),learnFunc = "Std_Backpropagation",learnFuncParams = c(0.7,0.1), initFuncParams = c(-0.3, 0.3), maxit = 200, inputsTest = seeds$inputsTest,
+             targetsTest = seeds$targetsTest,linOut = FALSE)
+
+fit du modèle avec une autre foction que le nnet
+```{r}
+model <- mlp(seeds$inputsTrain, seeds$targetsTrain,nInputs=18,nOutputs=7, size = c(5),learnFunc = "Std_Backpropagation",learnFuncParams = c(0.1), initFuncParams = c(-0.3, 0.3), maxit = 60, inputsTest = seeds$inputsTest,
+             targetsTest = seeds$targetsTest)
+
+predictions1 <- predict(model, seeds$inputsTest)
+plotIterativeError(model1)
+plotRegressionError(predictions1[, 2], seeds$targetsTest[, 2], pch = 3)
+plotROC(fitted.values(model1)[, 2], seeds$targetsTrain[, 2])
+plotROC(predictions1[, 2], seeds$targetsTest[, 2])
+#☻matrices de confusions
+pred1=confusionMatrix(seeds$targetsTrain, fitted.values(model))
+pred2=confusionMatrix(seeds$targetsTest, predictions1)
+pred3=confusionMatrix(seeds$targetsTrain,encodeClassLabels(fitted.values(model), method = "402040", l = 0.4, h = 0.6))
+
+
+
+pred1=confusionMatrix(seeds$targetsTrain, fitted.values(model))
+
+pred1
+
+taux1 = sum(diag(pred1))/sum(pred1)
+taux2 = sum(diag(pred2))/sum(pred2)
+taux3 = sum(diag(pred3))/sum(pred3)
+
+taux1
+taux2
+taux3
+```
+
+Prédiction du modèle
+
+```{r}
+predictions1 <- predict(model1, seeds$inputsTest)
+plotIterativeError(model1)
+plotRegressionError(predictions1[, 2], seeds$targetsTest[, 2], pch = 3)
+plotROC(fitted.values(model1)[, 2], seeds$targetsTrain[, 2])
+plotROC(predictions1[, 3], seeds$targetsTest[, 3])
+##############################################################
+plot(inputs, type = "l")
+plot(targets[1:100], type = "l")
+lines(model1$fitted.values[1:100], col = "green")
+
+plotIterativeError(model1)
+#plotRegressionError(seeds$targetsTrain, model1$fitted.values)
+#plotRegressionError(seeds$targetsTest, model1$fittedTestValues)
+hist(model1$fitted.values - seeds$targetsTrain)
+plotROC(predictions1, seeds$targetsTest)
+plotROC(fitted.values(model1), seeds$targetsTrain)
+```
+
+Matrice de confusion et taux de confiance
+
+```{r}
+pred=confusionMatrix(seeds$targetsTrain, fitted.values(model1))
+
+pred
+
+taux = sum(diag(pred))/sum(pred)
+
+taux     #on pourrait pas esperer mieux!!!!!!
+```
+Recherche des paramètres optimaux
+
+seq(1,9,1), seq(0,0001,0.1)
+```{r}
+#on tunne le nbre de couchouche cachée et le taux d apprentissage
+parameterGrid <-  expand.grid(c(3,5,9,15), c(0.00316, 0.0147, 0.1)) 
+colnames(parameterGrid) = c("nHidden", "learnRate") 
+
+rownames(parameterGrid) = paste("nnet-", apply(parameterGrid, 1, function(x) {paste(x,sep="", collapse="-")}), sep="") 
+
+models = apply(parameterGrid,1,function(p) { 
+          mlp(seeds$inputsTrain, seeds$targetsTrain, size=p[1], learnFunc="Std_Backpropagation", learnFuncParams=c(0.7,p[2]), maxit=200, inputsTest=seeds$inputsTest,targetsTest=seeds$targetsTest) 
+        })
+
+#affichons iteraivement toute ces confi
+#par(mfrow=c(4,3)) 
+for(modInd in 1:length(models)) { 
+      plotIterativeError(models[[modInd]], main=names(models)[modInd]) 
+}
+#Nous pouvons ensuite trouver des sortie et tester des RMSE, et découvrir #quels sont les modèles les plus performants:
+trainErrors <-  data.frame(lapply(models, function(mod) { 
+              error<-  sqrt(sum((mod$fitted.values - seeds$targetsTrain)^2)) 
+              error 
+           })) 
+testErrors <-  data.frame(lapply(models, function(mod) { 
+        pred <-  predict(mod,seeds$inputsTest) 
+        error <-  sqrt(sum((pred - seeds$targetsTest)^2)) 
+          error 
+        })) 
+
+# #affichage du train
+#  t(trainErrors)
+# #affichage u test
+#   t(testErrors)
+# #on reccupere les parametres qui minimise l'erreu
+#   trainErrors[which(min(trainErrors) == trainErrors)]
+#   #  nnet.15.0.1
+#   #1    2.488925
+#    testErrors[which(min(trainErrors) == trainErrors)]
+# #  nnet.15.0.1
+# #1    1.467122
+#    #affichons les parametres du model
+model <- models[[which(min(testErrors) == testErrors)]]
+    model
+summary(model)
+# Class: mlp->rsnns
+# Number of inputs: 7 
+# Number of outputs: 3 
+# Maximal iterations: 200 
+# Initialization function: Randomize_Weights 
+# Initialization function parameters: -0.3 0.3 
+# Learning function: Std_Backpropagation 
+# Learning function parameters: 0.7 0.00316 
+# Update function:Topological_Order
+# Update function parameters: 0 
+# Patterns are shuffled internally: TRUE 
+# Compute error in every iteration: TRUE 
+# Architecture Parameters:
+# $size
+# nHidden 
+#       5 
+```
+
+Améliorattion du 1er modèle avec les paramètres optimaux
+
+```{r}
+model1 <- mlp(seeds$inputsTrain, seeds$targetsTrain,nInputs=7,nOutputs=3, size = c(5),learnFunc = "Std_Backpropagation",learnFuncParams = c(0.7, 0.00316), initFuncParams = c(-0.3, 0.3), maxit = 200, inputsTest = seeds$inputsTest,
+             targetsTest = seeds$targetsTest)
+
+predictions2 <- predict(model1, seeds$inputsTest)
+pred1=confusionMatrix(seeds$targetsTrain, fitted.values(model1))
+pred2=confusionMatrix(seeds$targetsTest, predictions2)
+#pred3=confusionMatrix(seeds$targetsTrain,encodeClassLabels(fitted.values(model1), method = "402040", l = 0.4, h = 0.6))
+
+
+
+pred2=confusionMatrix(seeds$targetsTrain, fitted.values(model1))
+
+pred2
+
+taux1 = sum(diag(pred1))/sum(pred1)
+taux2 = sum(diag(pred2))/sum(pred2)
+#taux3 = sum(diag(pred3))/sum(pred3)
+
+taux1
+#[1] 1
+taux2
+#[1] 1
+#taux3
+```
+
+
+
+```{r}
+#on tunne le nbre de couchouche cachée et le taux d apprentissage
+parameterGrid <-  expand.grid(seq(1,9,1), seq(0,0001,0.1)) 
+colnames(parameterGrid) = c("nHidden", "learnRate") 
+
+rownames(parameterGrid) = paste("nnet-", apply(parameterGrid, 1, function(x) {paste(x,sep="", collapse="-")}), sep="") 
+
+models = apply(parameterGrid,1,function(p) { 
+          mlp(seeds$inputsTrain, seeds$targetsTrain, size=p[1], learnFunc="Std_Backpropagation", learnFuncParams=c(0.7,p[2]), maxit=200, inputsTest=seeds$inputsTest,targetsTest=seeds$targetsTest) 
+        })
+
+#affichons iteraivement toute ces confi
+par(mfrow=c(4,3)) 
+for(modInd in 1:length(models)) { 
+      plotIterativeError(models[[modInd]], main=names(models)[modInd]) 
+}
+
+#test des resultats pour different hyperparametres
+
+trainErrors <-  data.frame(lapply(models, function(mod) { 
+              error<-  sqrt(sum((mod$fitted.values - seeds$targetsTrain)^2)) 
+              error 
+           })) 
+testErrors <-  data.frame(lapply(models, function(mod) { 
+        pred <-  predict(mod,seeds$inputsTest) 
+        error <-  sqrt(sum((pred - seeds$targetsTest)^2)) 
+          error 
+        })) 
+
+#affichage du train
+ t(trainErrors)
+#affichage u test
+  t(testErrors)
+#on reccupere les parametres qui minimise l'erreu
+  trainErrors[which(min(trainErrors) == trainErrors)]
+  #  nnet.15.0.1
+  #1    2.488925
+   testErrors[which(min(trainErrors) == trainErrors)]
+#  nnet.15.0.1
+#1    1.467122
+   #affichons les parametres du model
+    model <- models[[which(min(testErrors) == testErrors)]]
+    model
+summary(model)
+
+# Class: mlp->rsnns
+# Number of inputs: 7 
+# Number of outputs: 3 
+# Maximal iterations: 200 
+# Initialization function: Randomize_Weights 
+# Initialization function parameters: -0.3 0.3 
+# Learning function: Std_Backpropagation 
+# Learning function parameters: 0.7 0.1 
+# Update function:Topological_Order
+# Update function parameters: 0 
+# Patterns are shuffled internally: TRUE 
+# Compute error in every iteration: TRUE 
+# Architecture Parameters:
+# $size
+# nHidden 
+#       6 
+
+```
+
+Avec le pmc on a un taux de 97.7% incroyable mais vraie.
+```{r}
+model3 <- mlp(seeds$inputsTrain, seeds$targetsTrain,nInputs=7,nOutputs=3, size = c(6),learnFunc = "Std_Backpropagation",learnFuncParams = c(0.7,0.1), initFuncParams = c(-0.3, 0.3), maxit = 200, inputsTest = seeds$inputsTest,
+             targetsTest = seeds$targetsTest)
+
+
+#predictions3 <- predict(model3, seeds$inputsTest)
+#plotIterativeError(model3)
+#plotRegressionError(predictions3[, 2], seeds$targetsTest[, 2], pch = 3)
+#plotROC(fitted.values(model3)[, 2], seeds$targetsTrain[, 2])
+#plotROC(predictions3[, 2], seeds$targetsTest[, 2])
+
+
+
+#predictions2 <- predict(model1, seeds$inputsTest)
+pred1=confusionMatrix(seeds$targetsTrain, fitted.values(model3))
+pred2=confusionMatrix(seeds$targetsTest, predictions3)
+pred3=confusionMatrix(seeds$targetsTrain,encodeClassLabels(fitted.values(model3), method = "402040", l = 0.4, h = 0.6))
+
+
+
+pred2=confusionMatrix(seeds$targetsTrain, fitted.values(model3))
+
+pred2
+
+taux1 = sum(diag(pred1))/sum(pred1)
+taux2 = sum(diag(pred2))/sum(pred2)
+taux3 = sum(diag(pred3))/sum(pred3)
+
+taux1
+taux2
+taux3
+```
+
+```{r}
+#on tunne le nbre de couchouche cachée et le taux d apprentissage
+parameterGrid <-  expand.grid(seq(1,9,1), seq(0,0001,0.1)) 
+colnames(parameterGrid) = c("nHidden", "learnRate") 
+
+rownames(parameterGrid) = paste("nnet-", apply(parameterGrid, 1, function(x) {paste(x,sep="", collapse="-")}), sep="") 
+
+models = apply(parameterGrid,1,function(p) { 
+          mlp(seeds$inputsTrain, seeds$targetsTrain, size=p[1], learnFunc="Std_Backpropagation", learnFuncParams=c(0.7,p[2]), maxit=200, inputsTest=seeds$inputsTest,targetsTest=seeds$targetsTest) 
+        })
+
+#affichons iteraivement toute ces confi
+#par(mfrow=c(4,3)) 
+for(modInd in 1:length(models)) { 
+      plotIterativeError(models[[modInd]], main=names(models)[modInd]) 
+}
+
+#test des resultats pour different hyperparametres
+
+trainErrors <-  data.frame(lapply(models, function(mod) { 
+              error<-  sqrt(sum((mod$fitted.values - seeds$targetsTrain)^2)) 
+              error 
+           })) 
+testErrors <-  data.frame(lapply(models, function(mod) { 
+        pred <-  predict(mod,seeds$inputsTest) 
+        error <-  sqrt(sum((pred - seeds$targetsTest)^2)) 
+          error 
+        })) 
+
+#affichage du train
+ t(trainErrors)
+#affichage u test
+  t(testErrors)
+#on reccupere les parametres qui minimise l'erreu
+  trainErrors[which(min(trainErrors) == trainErrors)]
+  #  nnet.15.0.1
+  #1    2.488925
+   testErrors[which(min(trainErrors) == trainErrors)]
+#  nnet.15.0.1
+#1    1.467122
+   #affichons les parametres du model
+    model <- models[[which(min(testErrors) == testErrors)]]
+    model
+summary(model)
+
+```
+
+
+##################################Question2#################################
+#############################pmc vs randomforest############################
+############################################################################
+Randomforest sur la bibliothéque Randomforest
+```{r}
+set.seed(123)
+library("randomForest")
+setwd("C:/Users/ayadm/OneDrive/isup/Reseau_de_neurones")
+seeds=read.table("seeds_dataset.txt",sep="",header = TRUE)
+sample = sample.int(n = nrow(seeds), size = floor(.8*nrow(seeds)), replace = F)
+train = seeds[sample, ] #decompostion en train
+test  = seeds[-sample, ] #decomposition en test
+colnames(train)
+(fit1=randomForest(as.factor(X1) ~ .,data=train,na.action = na.roughfix))
+pred1=predict(fit1, test[,-8],type = "class")
+pred1
+mat1 = table(pred, test[,8])
+mat1
+taux1 = sum(diag(mat1))/ sum(mat1)
+taux1
+#[1]  0.8333333
+#recherche des paramétres optimaux
+#choix de mtry
+tun.para= tuneRF(train[,-8],as.factor(train[,8]))
+print(tun.para)
+#mtry=7
+#choix du nombre d arbre
+plot(fit1$err.rate[,1], type = "l", xlab = "nombre d'arbres", ylab = "erreur OOB")
+#ntree=20
+(fit2=randomForest(as.factor(X1) ~ .,data=train,na.action = na.roughfix,mtry=7,ntree=410))
+plot(fit)
+#fit$err.rate
+pred2=predict(fit2, test[,-8],type = "class")
+pred2
+mat2 = table(pred2, test[,8])
+mat2
+taux2 = sum(diag(mat2))/ sum(mat2)
+taux2
+#[1] 0.9047619
+```
+PMC sur la bibliothéque nnet
+```{r}
+library(nnet)
+fit2 = nnet(as.factor(X1) ~., data = train, size = 2, decay = 0.001)
+
+summary(fit2)
+
+#test[,-5]
+
+#test[, 5]
+
+pred = predict(fit2,newdata = test[,-8],type="class")
+pred
+
+mat = table(pred, test[, 8])
+taux = sum(diag(mat))/sum(mat)
+mat
+# la solution non optimiser du pmc fait mieux que celle optimiser d'un randomforest
+taux
+#[1] 0.9285714
+
+#######optimisation des hyper parametres du pmc#######################
+library(e1071)
+
+tune.model = tune.nnet (as.factor(X1) ~., data = train, size = c (1, 3, 5),
+                            decay = c (0.1, 0.001, 0.000001))
+
+plot(tune.model)
+tune.model
+# verification de la performance
+model = nnet(as.factor(X1) ~ ., data = train, size = 5, decay = 0.001, maxit = 100)
+
+summary(model)
+# verificetion du score
+pred = predict(model,newdata = test[,-8],type="class") 
+pred
+mat = table(pred, test[, 8])
+taux = sum(diag(mat))/sum(mat)
+mat
+
+taux
+#[1] 0.9761905
+#le pmc fait mieux de loin que le randomforest
+
+```
+
+
