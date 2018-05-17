@@ -1,0 +1,358 @@
+---
+title: "Projet_fiabilit√©"
+author: "moussa"
+date: "17 f√©vrier 2018"
+output: html_document
+---
+http://www.breves-de-maths.fr/quelle-hauteur-pour-la-digue/
+http://www.irstea.fr/nos-editions/dossiers/risque-inondation/prevision-prevention-protection
+https://fr.wikipedia.org/wiki/S%C3%BBret%C3%A9_de_fonctionnement
+
+```{r setup, include=TRUE}
+setwd("C:/Users/ayadm/OneDrive/isup/fiabilite")
+library(ggplot2)
+data = read.table("data.csv",sep=",",dec = ",",header = TRUE)
+names(data)<-c("annee","Debit","Hauteur")
+
+data
+```
+
+Introduction 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+D…TERMINATION DE LA HAUTEUR HAUTEUR HAUTEUR HAUTEUR HAUTEUR HAUTEUR
+
+DÈfinition (Risque)
+
+DÈfinition (FiabilitÈ)
+
+Taitement des valeurs manquante
+
+```{r}
+
+library(VIM)
+data=kNN(data, k=5, imp_var=FALSE)
+#df <- data.frame(x=data[,1], y1=data[,2],y2=data[,3])
+#ggplot(df, aes(x, y = value, color = variable)) + 
+#    geom_col(aes(y = y1, col = "Hauteur"))+geom_col(aes(y=y2,col="debit"))
+
+df <- data.frame(x=data[,3],y=data[,2])
+ggplot(df, aes(x, y = value, color = variable)) +geom_col(aes(y=y,col="debit"))
+
+```
+la haiteur de dÈbit maximum rÈlevÈ sur les donnÈes historique est de 7,2. En tenant compte de cette information cruciale donnÈe par les donnÈes historique et de la prÈsence de quelleques valeurs manquante, on peut proposer une hauteur de digue de 10
+
+```{r}
+#x=rnorm(length(data[,3]),4,1)
+hist(x = data[,3],freq = FALSE, main = "hauteur d eau")
+#curve(dnorm(x,4,1.3,log = FALSE),from=1,to=8, add=TRUE)
+
+
+```
+
+
+
+
+```{r}
+library("evd")
+par(mfrow=c(1, 2))
+tscaleplot(data$Hauteur, legend.loc=NULL)
+tshapeplot(data$Hauteur, legend.loc=NULL)
+simuGPD=fpot(data$Hauteur,threshold = 5.5)
+simuGPD
+simu_VaR=fpot(data$Hauteur,threshold = 5.5,npp = 1,mper= 50,std.err = FALSE)
+simu_VaR$estimate  
+```
+
+
+
+```{r}
+library(evmix)
+library(fExtremes)
+mrlplot(data$Hauteur)
+datagev<-gevFit(data$Hauteur)
+summary(datagev)
+head(data)
+```
+
+
+```{r}
+mrlplot(data$Hauteur,try.thresh = c(5.5, 6 ))
+datagev<-gevFit(data$Hauteur)
+summary(datagev)
+head(data)
+```
+
+
+```{r}
+library(evd)
+taille=length(data$annee)
+simuVaR=fpot(data$Hauteur,5.5,npp=1,mper=taille)
+simuVaR$estimate
+```
+  rlevel     shape 
+ 7.013531 -0.724686 
+
+
+II Approche
+```{r}
+library("triangle")
+#library("gumbel")
+Z_v = rtriangle(149, 49, 51, 50)
+Z_m = rtriangle(149, 54, 56, 55)
+K_s = rnorm(149, 30, 7.5)
+Q = rgumbel(149, 1013, 558)
+L = 5000
+B = 300
+Z_b = 55.5
+
+H = (Q/(K_s*sqrt((Z_m-Z_v)/L)*B))^(3/5)
+mydata = H
+mydata
+```
+
+
+
+ III Approche
+```{r}
+library(evmix)
+library(fExtremes)
+library("MonteCarlo")
+H_d=4
+surverse=function(Q,K,Zm,Zv,L,B,H_d=0:100){
+  v=vector()
+  for(i in H_d){
+    S=Z_v+H-Z_b-i
+    estim_S=sum(S)/100
+    v=append(v,estim_S)
+  }
+return(v)
+}
+n_grid<-c(50,100,250,500)
+loc_grid<-seq(0,1,0.2)
+scale_grid<-c(1,2)
+param_list=list("n"=n_grid, "loc"=loc_grid, "scale"=scale_grid)
+erg<-MonteCarlo(func=surverse(Q,K,Zm,Zv,L,B), nrep=250, param_list=param_list, ncpus=1)
+
+#surverse(Q,K,Zm,Zv,L,B)
+```
+
+
+data3=read.table("Classeur1.csv",sep="\t",dec = ",",header = TRUE)
+mrlplot(data3$cout_moyenne)
+datagev1<-gevFit(data3$cout_moyenne)
+summary(datagev1)
+#head(data3)
+
+```{r}
+mrlplot(mydata)
+dat<-gevFit(mydata)
+summary(dat)
+
+```
+
+```{r}
+VaR=fpot(mydata,50,npp=1,mper=100)
+VaR$estimate
+```
+
+```{r}
+#v=vector()
+H=H[1:30]
+for(i in 1:30){
+S=H-i
+print(S)
+}
+
+#Z_b-Z_v-H-3
+
+```
+
+```{r}
+v=vector()
+comtp0=0
+comtp01=0
+comtp2=0
+for(i in seq(0,15)){
+#S=Z_b-Z_v-H-i
+#S=Z_v+H-Z_b-i
+S=H-i
+for(k in S){
+  if(k>=1.5){
+    comtp0=(1/30)*(comtp0+k*2000)}
+#  }
+#comtp0
+
+#comtp1=0
+#for(i in S){
+  if(k==1 || k<1.5){
+    comtp1=(1/30)*(comtp1+k*1500)}
+#  }
+#comtp1
+
+#comtp2=0
+#for(i in S){
+  if(k==0.5 || k<1){
+    comtp2=(1/30)*(comtp2+k*150)}
+  }
+#comtp2
+
+comtpeur=comtp0+comtp1+comtp2
+v=append(v,comtpeur)
+remove(S)
+}
+v
+#S[1]
+
+```
+
+```{r}
+w=vector()
+c0=0
+c1=0
+for(i in seq(0,15)){
+  if(i<4){
+    c0=c0+(i^2.6)*(1.3)
+  }else{
+    c1=c1+(i^1.8)*(1.3)
+  }
+  c=c0+c1
+  w=append(w,c)
+}
+w 
+
+cout_digue = function(x,y,n){
+  cout=vector()
+  for(i in seq(1,n)){
+    surverse=x-i
+    if(surverse[i]<=-0.1){
+      cout = append(cout,0)
+    }else if(surverse[i]==0 || surverse[i]<0.5){
+            cout = append(cout,y[i]*0.1)
+    }else if(surverse[i]==0.5 || surverse[i]<1){
+                  cout = append(cout,y[i]*0.5)
+    }else if(surverse[i]>=1){
+                        cout = append(cout,y[i])
+    }
+  }
+  return(cout)
+}
+
+cout = cout_digue(H,w,16)
+
+length(H)
+length(w)
+#########################################################################
+#########################test de calcul##################################
+#########################################################################
+Cg=vector()
+#j=0
+#while(j<=30){
+for(i in seq(1,30)){
+  if(S[i]>=1){
+    Cg=append(Cg,W[i])
+    }
+  if(S[i]==0.5 || S[i]<1){
+    Cg=append(Cg,W[i]/2)
+  }
+  if(S[i]==0 || S[i]<0.5){
+    Cg=append(Cg,W[i]*0.1)
+  }
+  if(S[i]<0){
+    Cg=append(Cg,W[i]*0)
+  }
+
+} 
+
+#}
+S
+Cg
+#j=0
+for(i in seq(1,30)){
+  t=S[i]
+  if(t<0){
+print("No")
+  }
+ if(t>0){
+print("yes")
+  }
+}
+
+```
+
+
+```{r}
+Cc=w+v+cout
+Cc
+#plot(x=seq(0,30),y=Cc,type = "o",main = "co˚t moyennÈ en fonction de la hauteur de la digue",xlab="hauteur de la digue",ylab="co˚t moyennÈ")
+```
+
+```{r}
+plot(x=seq(1,16),y=Cc,type = "o",main = "co˚t moyennÈ en fonction de la hauteur de la digue",xlab="hauteur de la digue",ylab="co˚t moyennÈ")
+```
+
+```{r}
+Cout = function(x){
+  v=vector()
+  w=vector()
+comtp0=0
+comtp01=0
+comtp2=0
+c0=0
+c1=0
+#S=Z_b-Z_v-H-i
+#S=Z_v+H-Z_b-i
+S=H-x
+for(i in S){
+  if(i>=1.5){
+    comtp0=(1/30)*(comtp0+i*2000)}
+  }
+#comtp0
+
+#comtp1=0
+for(i in S){
+  if(i==1 || i<1.5){
+    comtp1=(1/30)*(comtp1+i*1500)}
+  }
+#comtp1
+
+#comtp2=0
+for(i in S){
+  if(i==0.5 || i<1){
+    comtp2=(1/30)*(comtp2+i*150)}
+  }
+#comtp2
+
+comtpeur=comtp0+comtp1+comtp2
+v=append(v,comtpeur)
+
+
+#for(i in 1:30){
+if(x<4){
+  c0=c0+((x^2.6)*(1.3+(1/30)))
+}else{
+  c1=c1+((x^1.8)*(1.3+(100/30)))
+}
+c=c0+c1
+w=append(w,c)
+#}
+return(v+w)
+}
+Cout(1)
+optimize(Cout,c(1,30))
+print(optimise(Cout,c(2,5)))
+```
+
