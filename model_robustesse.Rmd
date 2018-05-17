@@ -1,6 +1,6 @@
 ---
 title: "cahier_exercice_de_simulation_modeles_robustesse"
-author: "Aiad Moussa et Farid MdjimilÃffÃ???'Ãf,Ã,Â©"
+author: "Aiad Moussa et Farid MdjimiliÃ©"
 date: "14 octobre 2017"
 output:
   word_document: default
@@ -54,7 +54,7 @@ Exo 1: Simulatoin d'une loi de Weibul.
 # legend(-4, 0.8, legend=c("xi = -1 mu=0", "xi = -5 mu=1","xi = -10 mu=2"),
 #        col=c("brown","darkgreen", "darkred"), lty=1:3, cex=0.8)
 ```
-On voit que la variation de du paramètres  de forme xi influe beaucoup sur la loi de weibull. En revanche elle reste invariante par rapport aux paramètres de position mu et au paramtètre d'echelle beta. 
+On voit que la variation de du paramÃ¨tres  de forme xi influe beaucoup sur la loi de weibull. En revanche elle reste invariante par rapport aux paramÃ¨tres de position mu et au paramtÃ¨tre d'echelle beta. 
 
 ```{r}
 # x=rgpd(n=100,xi=1,mu=0,beta = 1)
@@ -66,7 +66,7 @@ On voit que la variation de du paramètres  de forme xi influe beaucoup sur la lo
 
 Exo
 Test de wilcoxon
-Simulation de 10000 réel de Wn pour chaque valeur de U on trace la   densité de Wn à revoir l ennoncée)
+Simulation de 10000 rÃ©el de Wn pour chaque valeur de U on trace la   densitÃ© de Wn Ã  revoir l ennoncÃ©e)
 ```{r}
 n=20
 approx_densite=function(n){
@@ -105,7 +105,7 @@ x[y]=t
 }
 
 x=rwilcox(nn=10000,5000,5000)
-curve(dwilcox(x,5000,5000),from = -5,to=5,main="densité de Wilcoxon")
+curve(dwilcox(x,5000,5000),from = -5,to=5,main="densitÃ© de Wilcoxon")
 ```
 
 
@@ -125,8 +125,8 @@ q=qnorm(p,mu,1,lower.tail=FALSE)
 data.frame(mu,p,q)
 ```
 
-on remarque que plus le paramètre de position mu augmente et plus les quantiles p et q augmentent aussi.
-Mêeme procedure pour la loi de weibull et pareto.
+on remarque que plus le paramÃ¨tre de position mu augmente et plus les quantiles p et q augmentent aussi.
+MÃªeme procedure pour la loi de weibull et pareto.
 
 ```{r}
 n=100
@@ -139,7 +139,7 @@ q=qweibull(p,mu,1,lower.tail=FALSE)
 data.frame(mu,p,q)
 ```
 
-on voit que les quantiles de la loi de weibull ne sont pas très sensible à la variation du parmètre de position mu.
+on voit que les quantiles de la loi de weibull ne sont pas trÃ¨s sensible Ã  la variation du parmÃ¨tre de position mu.
 
 ```{r}
 n=100
@@ -154,7 +154,7 @@ q=qgpd(p, xi = 1, mu = 0, beta = 1, lower.tail = TRUE)
 data.frame(mu,p,q)
 ```
 
-estmateur à noyau gaussien
+estmateur Ã  noyau gaussien
 chois de la fenetre h
 simulation de la loi N(0,1) pour 1000 echentillon 
 ```{r}
@@ -170,10 +170,10 @@ curve(dnorm(x),-4,4,col=19,add=TRUE)
 plot(density(x,bw=0.251,kernel="gaussian",n=length(x),from=-4, to= 4))
 curve(dnorm(x),-4,4,col=19,add=TRUE)
 ```
-on voit que l estimateur à noyau pour le cas d'une loi normal estime très bien 
-la densité de la vaie loi pour bw=0.5.
+on voit que l estimateur Ã  noyau pour le cas d'une loi normal estime trÃ¨s bien 
+la densitÃ© de la vaie loi pour bw=0.5.
 
-estmateur à noyau gaussien
+estmateur Ã  noyau gaussien
 chois de la fenetre h
 simulation de la loi exponentiel pour 1000 echentillon
 ```{r}
@@ -192,10 +192,10 @@ curve(dnorm(x),0,10,col=19,add=TRUE)
 ```
 on remarque l estimateur est au dessous de la vraie loi.
 on a un effet de sous lissage.
-on a un mauvais estimateur. Un moyen de corriger cette erreur est de diminuer encore plus la taille des fenêtres pour essayer d'avoir un bon compromis biais variance.
+on a un mauvais estimateur. Un moyen de corriger cette erreur est de diminuer encore plus la taille des fenÃªtres pour essayer d'avoir un bon compromis biais variance.
 
 
-estmateur à noyau gaussien
+estmateur Ã  noyau gaussien
 chois de la fenetre h
 simulation de la loi de cauchy pour 1000 echentillon
 ```{r}
@@ -212,12 +212,12 @@ plot(density(x,bw=0.251,kernel="gaussian",n=length(x),from=-10, to= 10))
 curve(dnorm(x),-10,10,col=19,add=TRUE)
 
 ```
-on remarque l'estimateur est au dessus de la vraie loi pour valeur bw=0.5,cela se traduit par un phénomène de sur lissage.
-on a un effet du sur lissage/sous lissage sauf pour le cas h=0.15 qui semble bien prédire la vraie densité de la loi de cauchy.
+on remarque l'estimateur est au dessus de la vraie loi pour valeur bw=0.5,cela se traduit par un phÃ©nomÃ¨ne de sur lissage.
+on a un effet du sur lissage/sous lissage sauf pour le cas h=0.15 qui semble bien prÃ©dire la vraie densitÃ© de la loi de cauchy.
 l
 
-code de l estimateur de la densité par la méthode à noyau en choisisant h la 
-taille de la fênetre
+code de l estimateur de la densitÃ© par la mÃ©thode Ã  noyau en choisisant h la 
+taille de la fÃªnetre
 ```{r}
 Kh=function(x,X,h){
     if(2*abs(x-X)<=h){
@@ -242,8 +242,8 @@ noyau=function(x,y,h){
 
 ```
 
-code de l estimateur de la densité par la méthode de validation croisée avec
-h la taille de la fênetre
+code de l estimateur de la densitÃ© par la mÃ©thode de validation croisÃ©e avec
+h la taille de la fÃªnetre
 ```{r}
 Kh=function(x,X,h){
     if(2*abs(x-X)<=h){
