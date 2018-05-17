@@ -1,12 +1,9 @@
 ---
 title: "Projet_fiabilit√©"
-author: "moussa"
+author: "MOUSSA Aiad"
 date: "17 f√©vrier 2018"
 output: html_document
 ---
-http://www.breves-de-maths.fr/quelle-hauteur-pour-la-digue/
-http://www.irstea.fr/nos-editions/dossiers/risque-inondation/prevision-prevention-protection
-https://fr.wikipedia.org/wiki/S%C3%BBret%C3%A9_de_fonctionnement
 
 ```{r setup, include=TRUE}
 setwd("C:/Users/ayadm/OneDrive/isup/fiabilite")
@@ -33,11 +30,11 @@ Introduction
 
 
 
-D…TERMINATION DE LA HAUTEUR HAUTEUR HAUTEUR HAUTEUR HAUTEUR HAUTEUR
+D√âTERMINATION DE LA HAUTEUR HAUTEUR HAUTEUR HAUTEUR HAUTEUR HAUTEUR
 
-DÈfinition (Risque)
+D√©finition (Risque)
 
-DÈfinition (FiabilitÈ)
+D√©finition (Fiabilit√©)
 
 Taitement des valeurs manquante
 
@@ -53,7 +50,7 @@ df <- data.frame(x=data[,3],y=data[,2])
 ggplot(df, aes(x, y = value, color = variable)) +geom_col(aes(y=y,col="debit"))
 
 ```
-la haiteur de dÈbit maximum rÈlevÈ sur les donnÈes historique est de 7,2. En tenant compte de cette information cruciale donnÈe par les donnÈes historique et de la prÈsence de quelleques valeurs manquante, on peut proposer une hauteur de digue de 10
+la haiteur de d√©bit maximum r√©lev√© sur les donn√©es historique est de 7,2. En tenant compte de cette information cruciale donn√©e par les donn√©es historique et de la pr√©sence de quelleques valeurs manquante, on peut proposer une hauteur de digue de 10
 
 ```{r}
 #x=rnorm(length(data[,3]),4,1)
@@ -297,11 +294,11 @@ print("yes")
 ```{r}
 Cc=w+v+cout
 Cc
-#plot(x=seq(0,30),y=Cc,type = "o",main = "co˚t moyennÈ en fonction de la hauteur de la digue",xlab="hauteur de la digue",ylab="co˚t moyennÈ")
+#plot(x=seq(0,30),y=Cc,type = "o",main = "co√ªt moyenn√© en fonction de la hauteur de la digue",xlab="hauteur de la digue",ylab="co√ªt moyenn√©")
 ```
 
 ```{r}
-plot(x=seq(1,16),y=Cc,type = "o",main = "co˚t moyennÈ en fonction de la hauteur de la digue",xlab="hauteur de la digue",ylab="co˚t moyennÈ")
+plot(x=seq(1,16),y=Cc,type = "o",main = "co√ªt moyenn√© en fonction de la hauteur de la digue",xlab="hauteur de la digue",ylab="co√ªt moyenn√©")
 ```
 
 ```{r}
