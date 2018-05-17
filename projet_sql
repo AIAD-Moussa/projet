@@ -210,10 +210,6 @@ Remontees(ID,nom,ouvert,id_client)
 Remontees_pistes(ID_Remontees,ID_piste)
 client(ID_client,distance_parcourut,heure_entree,heure_sortie,accident)
 
-Question 2
-tu peux me faire le schema relationnel ou entité association de la precedente table. 
-jtmmmmm mon frere MDDRRRRRRRRRRR.
-
 
 
 
