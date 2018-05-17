@@ -1,0 +1,255 @@
+---
+title: "Projet_clestering"
+author: "Moussa AIAD et  Anass EL MENAN"
+date: "7 mars 2018"
+output: html_document
+---
+
+Resumé:
+cette base de données decrit la consomation énergétique domestique toutes les 1 min durant 47 mois (soit 4 ans). elle contient 2,075,259 d'obseravtions et 9 variables.
+les variables sont:
+-la date
+-l'heure
+-global_active_power: puissance active moyenne en minutes des maisons (en kilowatt)
+-global_reactive_power: puissance réactive moyenne en minutes des maisons (en kilowatt)
+-tension: tension moyenne par minutes (en volt)
+-Intensité.globale: Intensité moyenne des minutes moyenne des maisons (en ampère)
+-sub_metering_1: sous-comptage d'énergie n ° 1 (en wattheure d'énergie active). Il correspond à la cuisine, contenant principalement un lave-vaisselle, un four et un micro-ondes (les plaques chauffantes ne sont pas électriques mais alimentées au gaz)
+-sub_metering_2: sous-comptage d'énergie n ° 2 (en wattheure d'énergie active). Il correspond à la buanderie, contenant un lave-linge, un sèche-linge, un réfrigérateur et une lumière
+-sub_metering_3: sous-dosage énergétique n ° 3 (en wattheure d'énergie active). Il correspond à un chauffe-eau électrique et à un climatiseur
+
+```{r}
+library(dplyr)
+library(tidyverse)
+setwd("C:/Users/ayadm/OneDrive/isup/clustering")
+data = read.table("household_power_consumption.txt",sep = ";",header = TRUE)
+glimpse(data) #pour verifier les types de variables
+
+```
+
+TRAITEMENT DE D0NNEES
+
+
+ changement de type de variable factor en numeric
+```{r }
+data = mutate(data, Global_active_power= as.numeric(levels(Global_active_power))[Global_active_power])
+data = mutate(data, Global_reactive_power= as.numeric(levels(Global_reactive_power))[Global_reactive_power])
+data = mutate(data, Voltage= as.numeric(levels(Voltage))[Voltage])
+data = mutate(data, Global_intensity= as.numeric(levels(Global_intensity))[Global_intensity])
+data = mutate(data, Sub_metering_1= as.numeric(levels(Sub_metering_1))[Sub_metering_1])
+data = mutate(data, Sub_metering_2= as.numeric(levels(Sub_metering_2))[Sub_metering_2])
+data = mutate(data,Global_power=Global_active_power+Global_reactive_power)
+
+glimpse(data)     # vérification du type de données
+class(data$Voltage) # la variable Voltage est desormé de type numéric
+
+```
+
+ Suppression des valeurs manquantes
+```{r}
+library(dplyr)
+data = data %>%
+  na.omit(data)
+
+data = dplyr::slice(data,1:10000)
+data_select_sclae = scale(data[,3:ncol(data)], center = TRUE,scale = TRUE)
+
+```
+
+CAH et ACP
+```{r}
+library(FactoMineR)
+#la fonction PCA() normalise par défaut les données
+mydataFil = data[, -c(1, 2)]
+res.pca = PCA(mydataFil, ncp=3)
+
+#on enlève les variables très corrélées
+mydataFil2 = mydataFil[, -c(3, 4)]
+res.pca = PCA(mydataFil2, ncp=3)
+```
+
+```{r}
+#HCPC
+res.hcpc <- HCPC(res.pca, graph = FALSE)
+
+#affichage des données avec le cluster correspondant
+head(res.hcpc$data.clust, 10)
+
+#variables décrivant les clusters
+res.hcpc$desc.var
+
+#composantes principales + arbre
+plot(res.hcpc, choice = "3D.map")
+
+#dendrogramme 
+plot(res.hcpc, choice ="tree", cex = 0.6)
+
+#nuage de points avec partitionnement des données
+plot(res.hcpc, choice ="map", draw.tree = FALSE)
+```
+
+Kmeans
+ 
+ Choix du nombre des groupes
+```{r}
+library(dplyr)
+
+liste_variance <- function( k = 2:20, t = data_select_sclae[,1:2]){
+  x = rep(0,18)
+  for(i in k){
+  cl = kmeans(t,i,nstart=5)
+  x[i-1] = cl$betweenss/cl$totss
+  }
+  return(x)
+}
+
+t = data_select_sclae[,3:4]
+k = 2:20
+y =liste_variance(k,t)
+x = 1:19
+plot(x,y,type = "b",col = "blue",xlab="Nb. de groupes",ylab="% inertie expliquée",main = "sum of squared") #on retiendra 4 classes pour notre K-means
+
+```
+
+ Clustering de la puissance active et reactive
+```{r}
+cl_kmeans = kmeans(data_select_sclae[,1:2],4,nstart=30,algorithm ="Lloyd")
+plot(data_select_sclae[,1:2], col = cl_kmeans$cluster)
+points(cl_kmeans$centers, col = 1:4, pch = 8,cex = 15)
+cl_kmeans #le partionnement explique presque 70 % de l'inertie
+```
+
+ Boxplot des variables Cuisine, Buanderie et Chauffe_eau_et_climatiseur
+ cette ne figure ne figure pas sur le projet 
+```{r}
+library("tidyverse", lib.loc="~/R/win-library/3.4")
+library("cluster", lib.loc="C:/Program Files/R/R-3.4.1/library")
+library("factoextra", lib.loc="~/R/win-library/3.4")
+
+
+data[,5:7] %>%
+  mutate(Cluster = cl_kmeans$cluster) %>%
+  group_by(Cluster) %>%
+  summarise_all("mean")
+
+data[,5:7] %>%
+  mutate(Cluster = cl_kmeans$cluster) %>%
+  group_by(Cluster) %>%
+  filter(Cluster==1) %>%
+  #summarise_all("mean")
+  boxplot(col = c("blue", "red", "yellow","white"), names =   
+            c("Cuisine","Buanderie","Chauffe_eau_et_climatiseur","cluster"),main="classe 1")
+
+data[,5:7] %>%
+  mutate(Cluster = cl_kmeans$cluster) %>%
+  group_by(Cluster) %>%
+  filter(Cluster==2) %>%
+  #summarise_all("mean")
+  boxplot(col = c("blue", "red", "yellow","white"), names =   
+            c("Cuisine","Buanderie","Chauffe_eau_et_climatiseur","cluster"),main="classe 2")
+
+data[,5:7] %>%
+  mutate(Cluster = cl_kmeans$cluster) %>%
+  group_by(Cluster) %>%
+  filter(Cluster==3) %>%
+  #summarise_all("mean")
+  boxplot(col = c("blue", "red", "yellow","white"), names =   
+            c("Cuisine","Buanderie","Chauffe_eau_et_climatiseur","cluster"),main="classe 3")
+
+data[,5:7] %>%
+  mutate(Cluster = cl_kmeans$cluster) %>%
+  group_by(Cluster) %>%
+  filter(Cluster==4) %>%
+  #summarise_all("mean")
+  boxplot(col = c("blue", "red", "yellow","white"), names =   
+            c("Cuisine","Buanderie","Chauffe_eau_et_climatiseur","cluster"),main="classe 4")
+```
+
+ Récuperation des observations de chaque groupe
+```{r}
+c1=which(cl_kmeans$cluster==1) #groupe 1
+c2=which(cl_kmeans$cluster==2) #groupe 2
+c3=which(cl_kmeans$cluster==3) #groupe 3
+c4=which(cl_kmeans$cluster==4) #groupe 4
+
+classe_1=as.data.frame(data[c1,7:9])
+classe_2=as.data.frame(data[c2,7:9])
+classe_3=as.data.frame(data[c3,7:9])
+classe_4=as.data.frame(data[c4,7:9])
+
+```
+
+ Nuage de points des variables Cuisine, Buanderie, Chauffe_eau_et_climatiseur
+```{r}
+library(ggplot2)
+df <- data.frame(x=1:length(classe_1$Sub_metering_3), y1=classe_1$Sub_metering_1, y2=classe_1$Sub_metering_2,y3=classe_1$Sub_metering_3)
+ggplot(df, aes(x, y = value, color = variable)) + 
+    geom_line(aes(y = y1, col = "Cuisine")) + 
+    geom_line(aes(y = y2, col = "Buanderie"))+geom_line(aes(y = y3, col = "Chauffe_eau_et_Climatiseur"))+  ggtitle("Puissance par observation de la classe 1")
+
+df <- data.frame(x=1:length(classe_2$Sub_metering_3), y1=classe_2$Sub_metering_1, y2=classe_2$Sub_metering_2,y3=classe_2$Sub_metering_3)
+ggplot(df, aes(x, y = value, color = variable)) + 
+    geom_line(aes(y = y1, col = "Cuisine")) + 
+    geom_line(aes(y = y2, col = "Buanderie"))+geom_line(aes(y = y3, col = "Chauffe_eau_et_Climatiseur"))+  ggtitle("Puissance par observation de la classe 2")
+
+df <- data.frame(x=1:length(classe_3$Sub_metering_3), y1=classe_3$Sub_metering_1, y2=classe_3$Sub_metering_2,y3=classe_3$Sub_metering_3)
+ggplot(df, aes(x, y = value, color = variable)) + 
+   geom_line(aes(y = y1, col = "Cuisine")) + 
+    geom_line(aes(y = y2, col = "Buanderie"))+geom_line(aes(y = y3, col = "Chauffe_eau_et_Climatiseur"))+  ggtitle("Puissance par observation de la classe 3")
+
+df <- data.frame(x=1:length(classe_4$Sub_metering_3), y1=classe_4$Sub_metering_1, y2=classe_4$Sub_metering_2,y3=classe_4$Sub_metering_3)
+ggplot(df, aes(x, y = value, color = variable)) + 
+     geom_line(aes(y = y1, col = "Cuisine")) + 
+    geom_line(aes(y = y2, col = "Buanderie"))+geom_line(aes(y = y3, col = "Chauffe_eau_et_Climatiseur"))+  ggtitle("Puissance par observation de la classe 4")
+```
+
+Modèles de mélange
+ Application de la méthode sur les données en choisissant le nombre de groupe k=2, le critère de sélection est le BIC et le modèle est celui qui colle le mieux aux données parmi les 28 modèles possibles
+ 
+```{r}
+library(Rmixmod)
+t = as.data.frame(data_select_sclae[,1:2])
+resMixmod = mixmodCluster(t, nbCluster = 2, models = mixmodGaussianModel(),criterion = c("BIC"))
+summary(resMixmod)
+plot(resMixmod)
+
+```
+
+ Amélioration de la méthode précédente
+```{r}
+library("Rmixmod")
+#mixmodStrategy()
+data = dplyr::slice(data,1:10000)
+data_select_sclae = scale(data[,1:ncol(data)], center = TRUE,scale = TRUE)
+t = as.data.frame(data_select_sclae[,1:2])
+strategy1 <- mixmodStrategy(algo = "EM", initMethod = "random",
+       nbTry = 50, epsilonInInit = 0.000001)
+xem2<-mixmodCluster(t,nbCluster=2:8,
+criterion = c("BIC", "ICL"), models = mixmodGaussianModel())
+xem2
+plot(xem2)
+```
+
+ Simulation des lois de mélange
+```{r}
+library(Rmixmod)
+t = as.data.frame(data_select_sclae[,1]) #Global_active_power
+strategy1 <- mixmodStrategy(algo = "EM", initMethod = "random",
+   	nbTry = 10, epsilonInInit = 0.000001)
+resMixmod<-mixmodCluster(t,nbCluster=2:8,
+criterion = c("BIC","ICL"), models = mixmodGaussianModel())
+
+estimatedDensite = function(x) as.numeric(sapply(x, function(y) t(resMixmod@bestResult@parameters@proportions)%*%dnorm(y,as.numeric(resMixmod@bestResult@parameters@mean),as.numeric(resMixmod@bestResult@parameters@variance)))) 
+curve(estimatedDensite,add=T, col = 2) 
+
+
+t = as.data.frame(data_select_sclae[,2]) #Global_reactive_power
+strategy1 <- mixmodStrategy(algo = "EM", initMethod = "random",
+   	nbTry = 10, epsilonInInit = 0.000001)
+resMixmod<-mixmodCluster(t,nbCluster=2:8,
+criterion = c("BIC","ICL"), models = mixmodGaussianModel())
+
+estimatedDensite = function(x) as.numeric(sapply(x, function(y) t(resMixmod@bestResult@parameters@proportions)%*%dnorm(y,as.numeric(resMixmod@bestResult@parameters@mean),as.numeric(resMixmod@bestResult@parameters@variance)))) 
+curve(estimatedDensite,add=T, col = 2) 
+```
+
