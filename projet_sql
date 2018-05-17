@@ -1,0 +1,224 @@
+
+Projet sql à rendre le 4 Mars 
+
+#question 1.3 nom des pistes
+select nom
+from pistes;
+/*
+    nom    
+-----------
+ Hiver
+ Été
+ Automne
+ Printemps
+(4 rows)
+*/
+#1.4
+select nom
+from pistes
+where ouvert=1;
+/*
+    nom    
+-----------
+ Hiver
+ Été
+ Printemps
+(3 rows)
+
+*/
+#1.5
+select max(longueur)
+from pistes
+/*
+ max  
+------
+ 1200
+(1 row)
+*/
+#1.6
+select nom
+from remontees
+where ouvert=1;
+/*
+  nom   
+--------
+ Grande
+ Petite
+(2 rows)
+*/
+#1.7
+select hauteur
+from neige n,pistes p
+where n.piste_id=p.id and p.nom = 'Hiver';
+/*
+hauteur 
+---------
+     107
+     144
+(2 rows)
+*/
+#1.8
+select r.nom
+from remontees r, remontees_pistes rp, pistes p
+where r.id=rp.remontees_id and rp.pistes_id= p.id and p.nom='Hiver';
+/*
+   nom   
+---------
+ Grande
+ Petite
+ Moyenne
+(3 rows)
+*/
+#1.9
+Aucune remontées mecanique poratant le nom de flocon
+#1.10
+select max(n.hauteur)
+from neige n,pistes p
+where p.id=n.piste_id and p.nom='Hiver';
+/*
+ max 
+-----
+ 144
+(1 row)
+*/
+#1.11
+select max(n.hauteur)
+from neige n,pistes p
+where p.id=n.piste_id;
+/*
+ max 
+-----
+ 144
+(1 row)
+*/
+#1.12
+insert into neige values('Sommet',230,
+/*
+emplacement | hauteur | piste_id 
+-------------+---------+----------
+ Mesure A1   |     107 |        0
+ Mesure A2   |     144 |        0
+ Mesure B1   |      99 |        1
+ Mesure B2   |     120 |        1
+ Mesure C1   |      37 |        2
+ Mesure C2   |      50 |        2
+ Mesure C3   |      33 |        2
+ Mesure D1   |      60 |        3
+ Mesure D2   |      34 |        3
+ Sommet      |     230 |        1
+(10 rows)
+
+*/
+#1.13
+on doit creer un dictionnaire sur chaque piste p et mettre à l interieur l ensemble de piste accessible avec ces caracterique depuis  p
+#1.14
+# on doit rajjouter une relation entre la table remontees_piste et pistes car aura besoin de la table piste plusieurs fois et un lien direct entre #piste et remontees_pistes
+projet=> select p.nom
+projet-> from remontees r, remontees_pistes rp, pistes p
+projet-> where r.id=rp.remontees_id and rp.pistes_id= p.id and r.nom='Grande';
+    nom    
+-----------
+ Hiver
+ Été
+ Automne
+ Printemps
+(4 rows)
+
+projet=> select p.nom
+from remontees r, remontees_pistes rp, pistes p
+where r.id=rp.remontees_id and rp.pistes_id= p.id and r.nom='Petite';
+    nom    
+-----------
+ Hiver
+ Printemps
+(2 rows)
+
+projet=> select p.nom
+from remontees r, remontees_pistes rp, pistes p
+where r.id=rp.remontees_id and rp.pistes_id= p.id and r.nom='Moyenne';
+   nom   
+---------
+ Hiver
+ Automne
+(2 rows)
+
+
+select r.nom
+from pistes p, remontees_pistes rp, remontees r
+where p.id=rp.pistes_id and rp.remontees_id=r.id and p.nom='Hiver'
+
+{Hiver:{Grande,Petite,Moyenne};Été:{Grande},Automne:{Grande,Moyenne},Printemps{Grande,Petite}}
+#1.14
+#la remontees Grande donne accée aux pistes H,E,A,P
+select nom
+from Pistes
+where nom in (select p.nom
+from pistes p, remontees_pistes rp, remontees r
+where p.id=rp.pistes_id and rp.remontees_id=r.id and r.nom='Grande'
+);
+/*
+   nom    
+-----------
+ Hiver
+ Été
+ Automne
+ Printemps
+(4 rows)
+*/
+#la remontees Grande donne accée aux pistes H,A
+select nom
+from Pistes
+where nom in (select p.nom
+from pistes p, remontees_pistes rp, remontees r
+where p.id=rp.pistes_id and rp.remontees_id=r.id and r.nom='Moyenne'
+);
+/*  
+ nom   
+---------
+ Hiver
+ Automne
+(2 rows)
+*/
+#la remontees Grande donne accée aux pistes H,P
+select nom
+from Pistes
+where nom in (select p.nom
+from pistes p, remontees_pistes rp, remontees r
+where p.id=rp.pistes_id and rp.remontees_id=r.id and r.nom='Petite'
+);
+/*  
+  nom    
+-----------
+ Hiver
+ Printemps
+(2 rows)
+*/
+
+#1.15
+comme on connait la longueure de chaque pistes, une méthode serait de
+faire la somme de chaque longueure partant des differente pistes et prendre
+le max de la distance parcourut.
+
+#exo 2
+Question 1
+
+On crée une table client contenant les information propre à ce dernier. En suite 
+fera des jointures entre la table client et la table psite.
+piste(ID,id_client,nom,ouvert,longeure)
+Neige(EMPLACEMENT,hauteur)
+Remontees(ID,nom,ouvert,id_client)
+Remontees_pistes(ID_Remontees,ID_piste)
+client(ID_client,distance_parcourut,heure_entree,heure_sortie,accident)
+
+Question 2
+tu peux me faire le schema relationnel ou entité association de la precedente table. 
+jtmmmmm mon frere MDDRRRRRRRRRRR.
+
+
+
+
+
+
+
+
+
