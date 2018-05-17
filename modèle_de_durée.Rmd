@@ -1,12 +1,12 @@
 ---
-title: "Modèles de durées"
+title: "ModÃ¨les de durÃ©es"
 author: "MOUSSA Aiad"
 date: "9 mai 2018"
 output: html_document
 ---
 
 ```{r}
-setwd("C:/Users/ayadm/OneDrive/isup/modèle de durée")
+setwd("C:/Users/ayadm/OneDrive/isup/modÃ¨le de durÃ©e")
 library(survival)
 mydata=read.table("modeles_durees.csv")
 mydata
@@ -21,10 +21,10 @@ survdiff(Surv(origines, delta)~M, data=mydata)
 cor(mydata)
 ```
 
-Modèle ajusté
+ModÃ¨le ajustÃ©
 ```{r}
 cox=coxph(Surv(origines, delta) ~ Y + M + C + X1 + X2 + X3 + X4,data=mydata)
-#Résumé du modèle de cox
+#RÃ©sumÃ© du modÃ¨le de cox
 summary(cox)
 ```
 ```{r}
@@ -33,11 +33,11 @@ res.c
 par(mfrow=c(2,4))
 plot(res.c)
 ```
-Edition des résidus de martingales
+Edition des rÃ©sidus de martingales
 ```{r}
 res.m=residuals(cox, type="martingale")
 par(mfrow=c(2,2))
-#Graphique résidus de martingale versus covariables non dichotomiques
+#Graphique rÃ©sidus de martingale versus covariables non dichotomiques
 #par(mfrow=c(2,1)
 X = as.matrix(mydata[,c("C","M")])
 for (j in 1:2) {
@@ -61,10 +61,10 @@ plot(dfbeta[,j], ylab=names(coef(cox))[j])
 abline(h=0, lty=2)}
 ```
 
-Modèle ajusté
+ModÃ¨le ajustÃ©
 ```{r}
 cox=coxph(Surv(origines, delta) ~ M + Y + X1 + X2 + X3 + X4,data=mydata)
-#Résumé du modèle de cox
+#RÃ©sumÃ© du modÃ¨le de cox
 summary(cox)
 ```
 il existe une influence significative d'au moins une covariable sur le taux de montant du sinistre.
@@ -73,7 +73,7 @@ il existe une influence significative d'au moins une covariable sur le taux de m
 surv.mydata = with(mydata,Surv(origines, delta))
 surv.mydata1 = survfit(surv.mydata ~ 1)
 #plot(survfit(cox,type="fleming-harrington"), ylim=c(.7,1),
-#xlab="Semaine", ylab="Proportion de non récidive", main="graphe de la fonction de survie")
+#xlab="Semaine", ylab="Proportion de non rÃ©cidive", main="graphe de la fonction de survie")
 #summary(surv.mydata1)
 plot(surv.mydata1)
 ```
@@ -86,7 +86,7 @@ de  hasard de baseline", type="l")
 
 ```{r}
 cox=coxph(Surv(origines, delta) ~ M + C + X1 + X2 + X3 + X4,data=mydata)
-#Résumé du modèle de cox
+#RÃ©sumÃ© du modÃ¨le de cox
 summary(cox)
 ```
 
