@@ -1,6 +1,6 @@
 ---
 title: "Projet_clestering"
-author: "Moussa AIAD et  Anass EL MENAN"
+author: "Moussa AIAD"
 date: "7 mars 2018"
 output: html_document
 ---
